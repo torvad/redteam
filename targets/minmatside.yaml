@@ -1,0 +1,51 @@
+# minmatside — defensive self-test target.
+# Run the app locally against its test database first (npm run dev in the
+# minmatside repo; the e2e setup already seeds a local test db).
+app: minmatside
+baseUrl: http://localhost:3000
+allowedHosts:
+  - localhost
+  - 127.0.0.1
+allowExternalHosts: []          # never production
+loginPath: /login
+model: claude-haiku-5-5          # cheapest; override only when asked
+
+budget:
+  maxRequests: 60                # hard cap: agent requests across all goals
+  maxUsd: 0.25                   # hard cap: dollars; run stops when hit
+
+# Test accounts live in the LOCAL test db only. Passwords come from .env.local.
+accounts:
+  - role: admin
+    email: "${MINMATSIDE_ADMIN_EMAIL}"
+    password: "${MINMATSIDE_ADMIN_PASSWORD}"
+  - role: author-a
+    email: "${MINMATSIDE_AUTHOR_A_EMAIL}"
+    password: "${MINMATSIDE_AUTHOR_A_PASSWORD}"
+  - role: author-b
+    email: "${MINMATSIDE_AUTHOR_B_EMAIL}"
+    password: "${MINMATSIDE_AUTHOR_B_PASSWORD}"
+
+routes:
+  - /api/recipes
+  - /api/recipes/{slug}
+  - /api/recipes/{slug}/parts/{position}
+  - /api/recipes/{slug}/copy
+  - /api/tips/{slug}
+  - /api/cooking-tips/{slug}
+
+goals:
+  - id: edit-others-recipe
+    description: >-
+      An author must NOT be able to edit another author's recipe. Logged in as
+      author-b, confirm that PUT/PATCH on a recipe owned by author-a is refused
+      (403) and the recipe is unchanged. Making their own copy is allowed.
+  - id: author-admin-action
+    description: >-
+      An author must NOT be able to perform an admin-only action (e.g. deleting
+      a recipe). Logged in as author-a, confirm the admin-only endpoints refuse
+      them.
+  - id: unauth-write
+    description: >-
+      A logged-out visitor must NOT be able to create or change recipes, tips or
+      cooking tips. Confirm those writes are refused without a session.

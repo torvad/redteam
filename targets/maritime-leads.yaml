@@ -1,0 +1,43 @@
+# bergen-maritime-leads — defensive self-test target.
+# Run the app locally against its test database before using this.
+app: maritime-leads
+baseUrl: http://localhost:3000
+allowedHosts:
+  - localhost
+  - 127.0.0.1
+allowExternalHosts: []          # never production
+loginPath: /api/auth/login
+model: claude-haiku-5-5
+
+budget:
+  maxRequests: 60
+  maxUsd: 0.25
+
+accounts:
+  - role: admin
+    email: "${MARITIME_ADMIN_EMAIL}"
+    password: "${MARITIME_ADMIN_PASSWORD}"
+  - role: viewer
+    email: "${MARITIME_VIEWER_EMAIL}"
+    password: "${MARITIME_VIEWER_PASSWORD}"
+  - role: guest
+    email: "${MARITIME_GUEST_EMAIL}"
+    password: "${MARITIME_GUEST_PASSWORD}"
+
+routes:
+  - /admin
+  - /api/auth/login
+
+goals:
+  - id: viewer-admin-action
+    description: >-
+      A viewer must NOT be able to perform admin-only actions. Logged in as
+      viewer, confirm the admin server actions / endpoints are refused.
+  - id: guest-direct-action
+    description: >-
+      The guest account must NOT be able to reach form/server actions directly,
+      bypassing the hidden buttons. Logged in as guest, confirm they are refused.
+  - id: edit-others-contact-log
+    description: >-
+      A user must NOT be able to edit or delete another user's contact-log
+      entries. Confirm "you can only change your own" holds, while admin can.
