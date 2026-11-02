@@ -7,7 +7,7 @@ allowedHosts:
   - localhost
   - 127.0.0.1
 allowExternalHosts: []          # never production
-loginPath: /login
+loginPath: /api/auth/login
 model: claude-haiku-5-5          # cheapest; override only when asked
 
 budget:
