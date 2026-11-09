@@ -31,8 +31,12 @@ routes:
   - /api/recipes/{slug}
   - /api/recipes/{slug}/parts/{position}
   - /api/recipes/{slug}/copy
+  - /api/recipes/{slug}/share
   - /api/tips/{slug}
   - /api/cooking-tips/{slug}
+  - /api/comments/{id}
+  - /api/admin/users/{id}
+  - /api/notifications
 
 goals:
   - id: edit-others-recipe
@@ -49,3 +53,32 @@ goals:
     description: >-
       A logged-out visitor must NOT be able to create or change recipes, tips or
       cooking tips. Confirm those writes are refused without a session.
+  - id: delete-others-comment
+    description: >-
+      A user must NOT be able to delete another user's comment. Logged in as
+      author-b, confirm that DELETE /api/comments/{id} on a comment authored by
+      someone else is refused (403) and the comment remains. Deleting their own
+      comment is allowed.
+  - id: edit-others-recipe-part
+    description: >-
+      Ownership must hold at the sub-resource level, not just the whole recipe.
+      Logged in as author-b, confirm that PUT /api/recipes/{slug}/parts/{position}
+      on a part of author-a's recipe is refused (403) and the part is unchanged.
+  - id: non-admin-user-admin
+    description: >-
+      Admin user-management must be admin-only. Logged in as author-a, confirm
+      that PATCH /api/admin/users/{id} (changing a role) and DELETE
+      /api/admin/users/{id} are both refused (401/403), and no user is changed
+      or deleted.
+  - id: self-privilege-escalation
+    description: >-
+      A user must NOT be able to raise their own privileges. Logged in as
+      author-a, confirm they cannot change their own role to admin through the
+      admin users endpoint or any other write, and that registering never yields
+      a role above visitor.
+  - id: read-others-notifications
+    description: >-
+      Notifications are private to their owner. Logged in as author-b, confirm
+      that /api/notifications only ever returns author-b's own notifications and
+      cannot be made to return another user's by tampering with ids or query
+      parameters.
