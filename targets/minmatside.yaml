@@ -11,7 +11,7 @@ loginPath: /api/auth/login
 model: claude-haiku-5-5          # cheapest; override only when asked
 
 budget:
-  maxRequests: 60                # hard cap: agent requests across all goals
+  maxRequests: 100               # hard cap: agent requests across all goals
   maxUsd: 0.25                   # hard cap: dollars; run stops when hit
 
 # Test accounts live in the LOCAL test db only. Passwords come from .env.local.
@@ -37,6 +37,11 @@ routes:
   - /api/comments/{id}
   - /api/admin/users/{id}
   - /api/notifications
+  - /api/upload
+  - /api/photos/{path}
+  - /api/cooking-tips/{slug}
+  - /api/friends/requests/{id}
+  - /api/users/search
 
 goals:
   - id: edit-others-recipe
@@ -82,3 +87,37 @@ goals:
       that /api/notifications only ever returns author-b's own notifications and
       cannot be made to return another user's by tampering with ids or query
       parameters.
+  - id: upload-access-and-type
+    description: >-
+      Image upload must be gated and type-safe. Confirm POST /api/upload is
+      refused (401) without a session and for a visitor-role account, and that
+      an author cannot upload a disallowed type such as image/svg+xml (which
+      could carry a script) — only jpeg/png/webp/gif are accepted. Note:
+      /api/photos/{path} is intentionally public (photos appear on public recipe
+      pages), so reading another user's photo is expected, not a finding.
+  - id: share-requires-friendship
+    description: >-
+      Sharing a recipe must require a session and an actual friendship. Confirm
+      POST /api/recipes/{slug}/share is refused (401) when logged out, and (403)
+      when the target friendId is not an accepted friend of the current user.
+  - id: edit-others-cooking-tip
+    description: >-
+      Logged in as author-b, confirm that PUT /api/cooking-tips/{slug} on a tip
+      authored by author-a is refused, and that DELETE on any cooking tip is
+      refused for a non-admin author.
+  - id: friend-request-forgery
+    description: >-
+      Logged in as author-b, confirm that author-b cannot accept, reject or
+      alter a friend request (/api/friends/requests/{id}) that belongs to
+      another user.
+  - id: mass-assignment-recipe
+    description: >-
+      Server must ignore privileged fields in request bodies. Logged in as
+      author-a, confirm that creating or updating a recipe while smuggling extra
+      fields (authorId, ownerId, role, published, id) does not reassign
+      ownership, change roles or force-publish.
+  - id: search-data-leak
+    description: >-
+      Search must not leak private fields. As author-b, confirm that
+      /api/users/search never returns emails or other non-public user fields,
+      and /api/recipes does not expose other authors' unpublished drafts.
